@@ -7,7 +7,7 @@ import org.example.clientsbackend.Domain.Entities.Client;
 
 import java.lang.reflect.Field;
 
-public class ClientFilterConstratintValidator implements ConstraintValidator<ClientFilterConstraint, ClientFilterModel> {
+public class ClientFilterConstraintValidator implements ConstraintValidator<ClientFilterConstraint, ClientFilterModel> {
     @Override
     public boolean isValid(ClientFilterModel clientFilterModel, ConstraintValidatorContext constraintValidatorContext) {
         try {

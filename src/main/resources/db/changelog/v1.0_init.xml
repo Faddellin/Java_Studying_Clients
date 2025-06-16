@@ -63,4 +63,5 @@
                                  constraintName="FK_CLIENTS_ON_MANAGER" referencedColumnNames="id"
                                  referencedTableName="managers"/>
     </changeSet>
+
 </databaseChangeLog>

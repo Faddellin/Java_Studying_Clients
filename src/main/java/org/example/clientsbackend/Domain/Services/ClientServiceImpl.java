@@ -1,6 +1,7 @@
 package org.example.clientsbackend.Domain.Services;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
 import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
 import org.example.clientsbackend.Application.Models.Client.ClientEditModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
@@ -33,12 +34,14 @@ public class ClientServiceImpl implements ClientService {
                 .deleteById(clientId);
     }
 
-    public void updateClient(Long clientId, ClientEditModel clientEditModel){
+    public void updateClient(Long clientId, ClientEditModel clientEditModel) throws ExceptionWrapper {
         Optional<Client> clientO = _clientRepository
                 .findById(clientId);
 
         if (clientO.isEmpty()) {
-            throw new EntityNotFoundException("Client not found");
+            ExceptionWrapper enittyNotFoundExceptionWrapper = new ExceptionWrapper(new EntityNotFoundException());
+            enittyNotFoundExceptionWrapper.addError("clientId", "Client not found");
+            throw enittyNotFoundExceptionWrapper;
         }
 
         Client client = clientO.get();

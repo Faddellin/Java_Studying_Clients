@@ -21,4 +21,5 @@ public class Manager {
 
     @NotNull
     private Integer phoneNumber;
+
 }

@@ -6,12 +6,18 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
 
 @Entity
 @Table(name = "clients")
 @AllArgsConstructor @NoArgsConstructor
 @Getter @Setter
 public class Client {
+
+    //Constructor for tests
+    public Client(Long id, String name, String email, Integer age){
+        this.id = id; this.name = name; this.email = email; this.age = age;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +33,7 @@ public class Client {
     @NotNull
     private Integer age;
 
-    @OneToOne(cascade = CascadeType.REMOVE)
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id")
     private Address address;
 

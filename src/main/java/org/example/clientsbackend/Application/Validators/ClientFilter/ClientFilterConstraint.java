@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = ClientFilterConstratintValidator.class)
+@Constraint(validatedBy = ClientFilterConstraintValidator.class)
 public @interface ClientFilterConstraint {
     String message() default "ClientFilter not correct";
     Class<?>[] groups() default {};

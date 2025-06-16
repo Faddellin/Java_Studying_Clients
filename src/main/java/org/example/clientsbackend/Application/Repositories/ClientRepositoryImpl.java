@@ -8,48 +8,42 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.example.clientsbackend.Application.Models.Client.ClientFilterModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
-import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
-import org.example.clientsbackend.Application.Repositories.Interfaces.CustomClientRepository;
+import org.example.clientsbackend.Application.Repositories.Factories.SortFactory;
+import org.example.clientsbackend.Application.Repositories.Specifications.ClientSpecification;
 import org.example.clientsbackend.Domain.Entities.Client;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class ClientRepositoryImpl implements CustomClientRepository {
-
+public class ClientRepositoryImpl extends
+        BaseRepositoryImpl<Client, Long>
+{
     private final EntityManager _entityManager;
 
     public ClientRepositoryImpl(EntityManager entityManager) {
+        super(Client.class, entityManager);
         _entityManager = entityManager;
     }
 
     public List<Client> getClientsByFilters(ClientFiltersModel clientFiltersModel) {
-        CriteriaBuilder criteriaBuilder = _entityManager.getCriteriaBuilder();
-        CriteriaQuery<Client> criteriaQuery = criteriaBuilder.createQuery(Client.class);
 
-        Root<Client> root = criteriaQuery.from(Client.class);
-        List<Predicate> predicates = new ArrayList<>();
+        Specification<Client> spec = (root, query, criteriaBuilder) -> null;
+        SortFactory sortFactory = new SortFactory();
+        Sort sort = sortFactory.createSort(clientFiltersModel.getSortType().getSortOrder(),clientFiltersModel.getSortType().getSortCriteria().toString());
 
-        //for (ClientFilterModel clientFilterModel: clientFiltersModel.getFilterModels()){
-        //    switch (clientFilterModel.getFilterOperator()){
-        //        case equal:
-        //            predicates.add(criteriaBuilder.equal(root.get(clientFilterModel.getFilterCriteria(),)))
-        //    }
-        //}
-        Predicate namePredicate = criteriaBuilder
-                .like(root.get("name"), "%k%");
+        for(ClientFilterModel cfm: clientFiltersModel.getFilterModels()){
+            spec = ClientSpecification.addClientSpec(cfm);
+        }
 
-        Predicate andPredicate = criteriaBuilder.and(
-                namePredicate
-        );
+        List<Client> clients = this.findAll(spec,
+                (clientFiltersModel.getPage() - 1) * clientFiltersModel.getSize(),
+                clientFiltersModel.getSize(),
+                sort);
 
-        criteriaQuery.where(andPredicate);
-
-        TypedQuery<Client> query = _entityManager.createQuery(criteriaQuery);
-        List<Client> clients = query.getResultList();
         return clients;
     }
-
 }

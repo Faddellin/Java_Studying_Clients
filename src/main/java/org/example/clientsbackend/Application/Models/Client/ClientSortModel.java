@@ -1,11 +1,13 @@
 package org.example.clientsbackend.Application.Models.Client;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.clientsbackend.Application.Models.Enums.SortOrder;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientSortCriteria;
 
+@AllArgsConstructor
 @Getter @Setter
 public class ClientSortModel {
 
