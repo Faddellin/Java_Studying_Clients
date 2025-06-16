@@ -4,11 +4,13 @@ import jakarta.persistence.EntityNotFoundException;
 import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
 import org.example.clientsbackend.Application.Models.Client.*;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientFilterCriteria;
+import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientSortCriteria;
 import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Application.Models.Enums.SortOrder;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Domain.Entities.Client;
+import org.example.clientsbackend.Domain.Mappers.DomainToDtoMapper;
 import org.example.clientsbackend.Domain.Services.ClientServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -122,11 +124,13 @@ public class ClientServiceTests {
         List<Client> returningClients = List.of(
                 new Client(1L,"test","test@mail.ru",5)
         );
+        List<ClientModel> clientsForCheck = returningClients.stream().map(c -> DomainToDtoMapper.MapToDto(c)).toList();
         when(clientRepository.getClientsByFilters(clientFiltersModel)).thenReturn(returningClients);
 
-        List<Client> clients = clientService.getClients(clientFiltersModel);
+        ClientPagedListModel clients = clientService.getClients(clientFiltersModel);
 
-        assertIterableEquals(clients, returningClients);
+        assertIterableEquals(clients.getClientModels().stream().map(c -> c.getId()).toList(),
+                clientsForCheck.stream().map(c -> c.getId()).toList());
         verify(clientRepository, times(1)).getClientsByFilters(clientFiltersModel);
     }
 

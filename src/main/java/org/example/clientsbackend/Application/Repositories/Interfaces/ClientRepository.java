@@ -11,4 +11,5 @@ public interface ClientRepository extends
         BaseRepository<Client, Long>
 {
     List<Client> getClientsByFilters(ClientFiltersModel clientFiltersModel);
+    Integer getClientsCountByFilters(ClientFiltersModel clientFiltersModel);
 }

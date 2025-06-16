@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
-import org.example.clientsbackend.Application.Validators.ClientFilter.ClientFilterConstraint;
 
 import java.util.List;
 

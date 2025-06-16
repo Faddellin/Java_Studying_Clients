@@ -6,6 +6,7 @@ import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
 import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
 import org.example.clientsbackend.Application.Models.Client.ClientEditModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
+import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
 import org.example.clientsbackend.Application.ServicesInterfaces.ClientService;
 import org.example.clientsbackend.Domain.Entities.Client;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +39,7 @@ public class ClientsController {
     }
 
     @PostMapping(path = "clients/get-all")
-    public List<Client> GetClients(@Valid @RequestBody ClientFiltersModel clientFiltersModel) {
+    public ClientPagedListModel GetClients(@Valid @RequestBody ClientFiltersModel clientFiltersModel) {
         return _clientService.getClients(clientFiltersModel);
     }
 }

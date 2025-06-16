@@ -5,9 +5,13 @@ import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
 import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
 import org.example.clientsbackend.Application.Models.Client.ClientEditModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
+import org.example.clientsbackend.Application.Models.Client.ClientModel;
+import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
+import org.example.clientsbackend.Application.Models.Common.PaginationModel;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Application.ServicesInterfaces.ClientService;
 import org.example.clientsbackend.Domain.Entities.Client;
+import org.example.clientsbackend.Domain.Mappers.DomainToDtoMapper;
 import org.example.clientsbackend.Domain.Mappers.DtoToDomainMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,7 +57,21 @@ public class ClientServiceImpl implements ClientService {
         _clientRepository.save(client);
     }
 
-    public List<Client> getClients(ClientFiltersModel clientFiltersModel){
-        return _clientRepository.getClientsByFilters(clientFiltersModel);
+    public ClientPagedListModel getClients(ClientFiltersModel clientFiltersModel){
+        Integer clientsCount = _clientRepository.getClientsCountByFilters(clientFiltersModel);
+
+        PaginationModel paginationModel = new PaginationModel(
+                clientsCount,
+                clientFiltersModel.getSize(),
+                clientFiltersModel.getPage()
+        );
+        clientFiltersModel.setPage(paginationModel.getPage());
+
+        List<ClientModel> clientModels = _clientRepository.getClientsByFilters(clientFiltersModel)
+                .stream()
+                .map(client -> DomainToDtoMapper.MapToDto(client))
+                .toList();
+
+        return new ClientPagedListModel(clientModels, paginationModel);
     }
 }

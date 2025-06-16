@@ -7,12 +7,19 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.clientsbackend.Application.Models.AddressModel.AddressModel;
+import org.example.clientsbackend.Application.Models.Manager.ManagerModel;
 import org.example.clientsbackend.Domain.Entities.Address;
 import org.example.clientsbackend.Domain.Entities.Manager;
 
 @AllArgsConstructor
 @Getter @Setter
 public class ClientModel {
+
+    //Constructor for tests
+    public ClientModel(Long id, String name, String email, Integer age){
+        this.id = id; this.name = name; this.email = email; this.age = age;
+    }
 
     @NotNull
     private Long id;
@@ -26,8 +33,8 @@ public class ClientModel {
     @NotNull
     private Integer age;
 
-    private Manager managerModel;
+    private ManagerModel managerModel;
 
-    private Address addressModel;
+    private AddressModel addressModel;
 
 }

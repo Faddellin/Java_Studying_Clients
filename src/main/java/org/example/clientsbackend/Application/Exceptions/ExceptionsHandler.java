@@ -2,10 +2,12 @@ package org.example.clientsbackend.Application.Exceptions;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
 import org.example.clientsbackend.Application.Models.Common.ResponseModel;
 import org.example.clientsbackend.Application.Utilities.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +25,9 @@ public class ExceptionsHandler {
         }
         else if(exceptionClass.equals(ConstraintViolationException.class) ||
                 exceptionClass.equals(MethodArgumentNotValidException.class) ||
-                exceptionClass.equals(NoResourceFoundException.class)) {
+                exceptionClass.equals(NoResourceFoundException.class) ||
+                exceptionClass.equals(ValidationException.class) ||
+                exceptionClass.equals(HttpMessageNotReadableException.class)) {
             return new Pair<>(400, HttpStatus.BAD_REQUEST);
         }
 
@@ -63,6 +67,28 @@ public class ExceptionsHandler {
                         violation -> errors.put(violation.getField(), violation.getDefaultMessage())
                 );
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
+        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ResponseModel> handleValidationException(
+            ValidationException e
+    ) {
+        Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
+        Dictionary<String, String> errors = new Hashtable<String, String>();
+        errors.put("Validation", e.getMessage());
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
+        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ResponseModel> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException e
+    ) {
+        Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
+        Dictionary<String, String> errors = new Hashtable<String, String>();
+        errors.put("JsonBody", e.getMessage());
         ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
         return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
     }
