@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.clientsbackend.Application.Models.AddressModel.AddressCreateModel;
 
 @AllArgsConstructor
 @Getter @Setter
@@ -20,5 +21,7 @@ public class ClientCreateModel {
 
     @NotNull
     private Integer age;
+
+    private AddressCreateModel addressCreateModel;
 
 }

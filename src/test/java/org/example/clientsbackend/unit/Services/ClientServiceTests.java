@@ -10,7 +10,7 @@ import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Application.Models.Enums.SortOrder;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Domain.Entities.Client;
-import org.example.clientsbackend.Domain.Mappers.DomainToDtoMapper;
+import org.example.clientsbackend.Domain.Mappers.ClientMapper;
 import org.example.clientsbackend.Domain.Services.ClientServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,11 +24,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class ClientServiceTests {
@@ -40,12 +37,12 @@ public class ClientServiceTests {
     private ClientServiceImpl clientService;
 
     @Test
-    void addClient_Normal_ClientAdded() {
+    void addClient_Normal_ClientAdded() throws ExceptionWrapper {
         Long clientId = 1L;
         String email = "test@test.com";
         String name = "testName";
         Integer age = 15;
-        ClientCreateModel clientCreateModel = new ClientCreateModel(name, email, age);
+        ClientCreateModel clientCreateModel = new ClientCreateModel(name, email, age, null);
         Client savedClient = new Client(clientId, name, email, age);
         when(clientRepository.save(any(Client.class))).thenReturn(savedClient);
 
@@ -61,7 +58,7 @@ public class ClientServiceTests {
             "test@mail.ru,testName,null"
     }, nullValues = "null")
     void addClient_Negative_throwIllegalArgumentException(String email, String name, Integer age) {
-        ClientCreateModel clientCreateModel = new ClientCreateModel(email, name, age);
+        ClientCreateModel clientCreateModel = new ClientCreateModel(email, name, age, null);
         when(clientRepository.save(any(Client.class)))
                 .thenThrow(new IllegalArgumentException("Not null violation"));
 
@@ -87,7 +84,7 @@ public class ClientServiceTests {
         String changedEmail = "testChanged@test.com";
         String changedName = "testNameChanged";
         Integer changedAge = 16;
-        ClientEditModel clientEditModel = new ClientEditModel(changedName, changedEmail, changedAge);
+        ClientEditModel clientEditModel = new ClientEditModel(changedName, changedEmail, changedAge, null);
         Client savedClient = new Client(clientId, "testName", "test@test.com", 15);
         when(clientRepository.findById(clientId)).thenReturn(Optional.of(savedClient));
 
@@ -106,10 +103,11 @@ public class ClientServiceTests {
         Long clientId = 1L;
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(EntityNotFoundException.class,
+        ExceptionWrapper exception = assertThrows(ExceptionWrapper.class,
                 () -> clientService.updateClient(clientId, new ClientEditModel()));
 
-        assertThat(exception.getMessage().equals("Client not found"));
+        assertEquals(exception.getErrors().get("clientId"),"Client not found");
+        assertEquals(exception.getExceptionClass(), EntityNotFoundException.class);
         verify(clientRepository, times(1)).findById(clientId);
     }
 
@@ -124,13 +122,13 @@ public class ClientServiceTests {
         List<Client> returningClients = List.of(
                 new Client(1L,"test","test@mail.ru",5)
         );
-        List<ClientModel> clientsForCheck = returningClients.stream().map(c -> DomainToDtoMapper.MapToDto(c)).toList();
+        List<ClientModel> clientsForCheck = returningClients.stream().map(ClientMapper.INSTANCE::clientToClientModel).toList();
         when(clientRepository.getClientsByFilters(clientFiltersModel)).thenReturn(returningClients);
 
         ClientPagedListModel clients = clientService.getClients(clientFiltersModel);
 
-        assertIterableEquals(clients.getClientModels().stream().map(c -> c.getId()).toList(),
-                clientsForCheck.stream().map(c -> c.getId()).toList());
+        assertIterableEquals(clients.getClientModels().stream().map(ClientModel::getId).toList(),
+                clientsForCheck.stream().map(ClientModel::getId).toList());
         verify(clientRepository, times(1)).getClientsByFilters(clientFiltersModel);
     }
 

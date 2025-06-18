@@ -6,8 +6,7 @@ import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Application.Validators.ClientFilter.ClientFilterConstraintValidator;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ClientFilterConstraintTests {
 
@@ -20,7 +19,7 @@ public class ClientFilterConstraintTests {
                 FilterOperator.greaterThan,
                 25
         );
-        assertEquals(validator.isValid(clientFilterModel, null), true);
+        assertTrue(validator.isValid(clientFilterModel, null));
     }
 
     @Test
@@ -30,7 +29,7 @@ public class ClientFilterConstraintTests {
                 FilterOperator.contains,
                 "check"
         );
-        assertEquals(validator.isValid(clientFilterModel, null), false);
+        assertFalse(validator.isValid(clientFilterModel, null));
     }
 
     @Test
@@ -40,7 +39,7 @@ public class ClientFilterConstraintTests {
                 FilterOperator.contains,
                 15
         );
-        assertEquals(validator.isValid(clientFilterModel, null), false);
+        assertFalse(validator.isValid(clientFilterModel, null));
     }
 
     @Test

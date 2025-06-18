@@ -1,49 +1,17 @@
 package org.example.clientsbackend.unit.Mappers;
 
-import org.example.clientsbackend.Application.Models.AddressModel.AddressModel;
+import org.example.clientsbackend.Application.Models.AddressModel.AddressCreateModel;
 import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
 import org.example.clientsbackend.Application.Models.Client.ClientModel;
-import org.example.clientsbackend.Application.Models.Manager.ManagerModel;
 import org.example.clientsbackend.Domain.Entities.Address;
 import org.example.clientsbackend.Domain.Entities.Client;
 import org.example.clientsbackend.Domain.Entities.Manager;
-import org.example.clientsbackend.Domain.Mappers.DomainToDtoMapper;
-import org.example.clientsbackend.Domain.Mappers.DtoToDomainMapper;
+import org.example.clientsbackend.Domain.Mappers.ClientMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DomainToDtoMapperTests {
-
-    @Test
-    void ManagerToDto_Normal_returnManagerModel(){
-        Long id = 1L;
-        String fullName = "testName";
-        Integer phoneNumber = 891614556;
-        Manager manager = new Manager(id, fullName, phoneNumber);
-
-        ManagerModel managerModel = DomainToDtoMapper.MapToDto(manager);
-
-        assertNotNull(managerModel);
-        assertEquals(managerModel.getId(), id);
-        assertEquals(managerModel.getFullName(), fullName);
-        assertEquals(managerModel.getPhoneNumber(), phoneNumber);
-    }
-
-    @Test
-    void AddressToDto_Normal_returnAddressModel(){
-        Long id = 1L;
-        String city = "testCity";
-        String street = "testStreet";
-        Address address = new Address(id, city, street);
-
-        AddressModel addressModel = DomainToDtoMapper.MapToDto(address);
-
-        assertNotNull(addressModel);
-        assertEquals(addressModel.getId(), id);
-        assertEquals(addressModel.getCity(), city);
-        assertEquals(addressModel.getStreet(), street);
-    }
+public class ClientMapperTests {
 
     @Test
     void ClientToDto_Normal_returnClientModel(){
@@ -53,7 +21,7 @@ public class DomainToDtoMapperTests {
         sourceClient.setManager(sourceManager);
         sourceClient.setAddress(sourceAddress);
 
-        ClientModel clientModel = DomainToDtoMapper.MapToDto(sourceClient);
+        ClientModel clientModel = ClientMapper.INSTANCE.clientToClientModel(sourceClient);
 
         assertNotNull(clientModel);
         assertEquals(clientModel.getId(), sourceClient.getId());
@@ -72,4 +40,25 @@ public class DomainToDtoMapperTests {
         );
     }
 
+    @Test
+    void ClientCreateModelToDomain_Normal_returnClient(){
+        String email = "test@test.com";
+        String name = "testName";
+        Integer age = 15;
+        String city = "testCity";
+        String street = "testStreet";
+        ClientCreateModel clientCreateModel = new ClientCreateModel(name,
+                email,
+                age,
+                new AddressCreateModel(city, street));
+
+        Client result = ClientMapper.INSTANCE.clientCreateModelToClient(clientCreateModel);
+
+        assertNotNull(result);
+        assertEquals(result.getEmail(), email);
+        assertEquals(result.getName(), name);
+        assertEquals(result.getAge(), age);
+        assertEquals(result.getAddress().getCity(), city);
+        assertEquals(result.getAddress().getStreet(), street);
+    }
 }

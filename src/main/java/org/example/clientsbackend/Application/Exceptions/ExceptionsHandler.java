@@ -3,6 +3,7 @@ package org.example.clientsbackend.Application.Exceptions;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
+import org.apache.coyote.BadRequestException;
 import org.example.clientsbackend.Application.Models.Common.ResponseModel;
 import org.example.clientsbackend.Application.Utilities.Pair;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,8 @@ public class ExceptionsHandler {
                 exceptionClass.equals(MethodArgumentNotValidException.class) ||
                 exceptionClass.equals(NoResourceFoundException.class) ||
                 exceptionClass.equals(ValidationException.class) ||
-                exceptionClass.equals(HttpMessageNotReadableException.class)) {
+                exceptionClass.equals(HttpMessageNotReadableException.class) ||
+                exceptionClass.equals(BadRequestException.class)) {
             return new Pair<>(400, HttpStatus.BAD_REQUEST);
         }
 
@@ -39,36 +41,36 @@ public class ExceptionsHandler {
             ExceptionWrapper e
     ) {
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getExceptionClass());
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, e.getErrors());
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), e.getErrors());
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ResponseModel> handleConstraintValidationException(
             ConstraintViolationException e
     ) {
-        Dictionary<String, String> errors = new Hashtable<String, String>();
+        Dictionary<String, String> errors = new Hashtable<>();
         e.getConstraintViolations()
                 .forEach(
                         violation -> errors.put(violation.getPropertyPath().toString(), violation.getMessage())
                 );
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), errors);
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ResponseModel> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException e
     ) {
-        Dictionary<String, String> errors = new Hashtable<String, String>();
+        Dictionary<String, String> errors = new Hashtable<>();
         e.getBindingResult().getFieldErrors()
                 .forEach(
                         violation -> errors.put(violation.getField(), violation.getDefaultMessage())
                 );
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), errors);
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 
     @ExceptionHandler(ValidationException.class)
@@ -76,10 +78,10 @@ public class ExceptionsHandler {
             ValidationException e
     ) {
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
-        Dictionary<String, String> errors = new Hashtable<String, String>();
+        Dictionary<String, String> errors = new Hashtable<>();
         errors.put("Validation", e.getMessage());
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), errors);
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -87,10 +89,10 @@ public class ExceptionsHandler {
             HttpMessageNotReadableException e
     ) {
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
-        Dictionary<String, String> errors = new Hashtable<String, String>();
+        Dictionary<String, String> errors = new Hashtable<>();
         errors.put("JsonBody", e.getMessage());
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), errors);
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
@@ -98,10 +100,10 @@ public class ExceptionsHandler {
             NoResourceFoundException e
     ) {
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
-        Dictionary<String, String> errors = new Hashtable<String, String>();
+        Dictionary<String, String> errors = new Hashtable<>();
         errors.put("url", e.getMessage());
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), errors);
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 
     @ExceptionHandler(Exception.class)
@@ -109,9 +111,10 @@ public class ExceptionsHandler {
             Exception e
     ) {
         Pair<Integer, HttpStatus> statusCodeAndHttpStatus = getStatusCodeAndHttpStatusByExceptionClass(e.getClass());
-        Dictionary<String, String> errors = new Hashtable<String, String>();
+        Dictionary<String, String> errors = new Hashtable<>();
         errors.put("unknownError", "Unknown error, please tell us about it");
-        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first, errors);
-        return new ResponseEntity<ResponseModel>(response, statusCodeAndHttpStatus.second);
+        System.out.println(e.getMessage());
+        ResponseModel response = new ResponseModel(statusCodeAndHttpStatus.first(), errors);
+        return new ResponseEntity<>(response, statusCodeAndHttpStatus.second());
     }
 }

@@ -5,9 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientFilterCriteria;
-import org.example.clientsbackend.Application.Models.Client.Enums.ClientSortCriteria;
 import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
-import org.example.clientsbackend.Application.Models.Enums.SortOrder;
 import org.example.clientsbackend.Application.Validators.ClientFilter.ClientFilterConstraint;
 
 @ClientFilterConstraint

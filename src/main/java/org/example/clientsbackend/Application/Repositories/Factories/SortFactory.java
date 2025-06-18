@@ -6,14 +6,10 @@ import org.springframework.data.domain.Sort;
 public class SortFactory {
     public Sort createSort(SortOrder sortOrder, String value){
         Sort newSort = Sort.by(value);
-        switch (sortOrder){
-            case Ascending:
-                newSort = newSort.ascending();
-                break;
-            default:
-                newSort = newSort.descending();
-                break;
-        }
+        newSort = switch (sortOrder) {
+            case Ascending -> newSort.ascending();
+            default -> newSort.descending();
+        };
         return newSort;
     }
 }

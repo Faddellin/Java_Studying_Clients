@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.clientsbackend.Application.Models.AddressModel.AddressCreateModel;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,4 +24,5 @@ public class ClientEditModel {
     @NotNull
     private Integer age;
 
+    private AddressCreateModel addressCreateModel;
 }

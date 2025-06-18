@@ -7,8 +7,8 @@ import java.util.Hashtable;
 
 @Getter
 public class ExceptionWrapper extends Exception {
-    private Class<? extends Exception> exceptionClass;
-    private Dictionary<String, String> errors = new Hashtable<String, String>();
+    private final Class<? extends Exception> exceptionClass;
+    private final Dictionary<String, String> errors = new Hashtable<>();
 
     public ExceptionWrapper(Exception originalException) {
         this.exceptionClass = originalException.getClass();

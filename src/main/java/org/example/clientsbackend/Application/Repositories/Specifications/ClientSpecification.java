@@ -2,31 +2,18 @@ package org.example.clientsbackend.Application.Repositories.Specifications;
 
 import org.example.clientsbackend.Application.Models.Client.ClientFilterModel;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientFilterCriteria;
-import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Domain.Entities.Client;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ClientSpecification {
     public static Specification<Client> addClientSpec(ClientFilterModel clientFilterModel) {
-        Specification<Client> newClientSpecification;
-        switch (clientFilterModel.getFilterOperator()){
-            case equal:
-                newClientSpecification = addEqualSpec(clientFilterModel.getValue(),clientFilterModel.getFilterCriteria());
-                break;
-            case notEqual:
-                newClientSpecification = addNotEqualSpec(clientFilterModel.getValue(),clientFilterModel.getFilterCriteria());
-                break;
-            case greaterThan:
-                newClientSpecification = addGreaterThanSpec(clientFilterModel.getValue(),clientFilterModel.getFilterCriteria());
-                break;
-            case lessThan:
-                newClientSpecification = addLessThanSpec(clientFilterModel.getValue(),clientFilterModel.getFilterCriteria());
-                break;
-            default:
-                newClientSpecification = addContainsSpec(clientFilterModel.getValue(),clientFilterModel.getFilterCriteria());
-                break;
-        }
-        return newClientSpecification;
+        return switch (clientFilterModel.getFilterOperator()) {
+            case equal -> addEqualSpec(clientFilterModel.getValue(), clientFilterModel.getFilterCriteria());
+            case notEqual -> addNotEqualSpec(clientFilterModel.getValue(), clientFilterModel.getFilterCriteria());
+            case greaterThan -> addGreaterThanSpec(clientFilterModel.getValue(), clientFilterModel.getFilterCriteria());
+            case lessThan -> addLessThanSpec(clientFilterModel.getValue(), clientFilterModel.getFilterCriteria());
+            default -> addContainsSpec(clientFilterModel.getValue(), clientFilterModel.getFilterCriteria());
+        };
     }
     public static Specification<Client> addEqualSpec(Object value, ClientFilterCriteria clientFilterCriteria){
         return (root, query, criteriaBuilder) ->
@@ -46,6 +33,6 @@ public class ClientSpecification {
     }
     public static Specification<Client> addContainsSpec(Object value, ClientFilterCriteria clientFilterCriteria){
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(root.get(clientFilterCriteria.toString()), "%" + (String)value + "%");
+                criteriaBuilder.like(root.get(clientFilterCriteria.toString()), "%" + value + "%");
     }
 }

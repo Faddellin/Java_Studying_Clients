@@ -1,6 +1,5 @@
 package org.example.clientsbackend.Presentation.Controllers;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
 import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
@@ -8,10 +7,7 @@ import org.example.clientsbackend.Application.Models.Client.ClientEditModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
 import org.example.clientsbackend.Application.ServicesInterfaces.ClientService;
-import org.example.clientsbackend.Domain.Entities.Client;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 public class ClientsController {
@@ -24,7 +20,7 @@ public class ClientsController {
     }
 
     @PostMapping(path = "clients/add")
-    public void AddClient(@Valid @RequestBody ClientCreateModel clientCreateModel) {
+    public void AddClient(@Valid @RequestBody ClientCreateModel clientCreateModel) throws ExceptionWrapper {
         _clientService.addClient(clientCreateModel);
     }
     @DeleteMapping(value = "clients/{id}")

@@ -1,7 +1,5 @@
 package org.example.clientsbackend.Application.Models.Enums;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 public enum FilterOperator {
     equal,
     notEqual,
