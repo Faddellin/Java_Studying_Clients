@@ -1,6 +1,7 @@
 package org.example.clientsbackend.Application.Models.Client;
 
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,10 +20,12 @@ public class ClientEditModel {
     private String name;
 
     @Email
+    @NotNull
     private String email;
 
     @NotNull
     private Integer age;
 
+    @Valid
     private AddressCreateModel addressCreateModel;
 }

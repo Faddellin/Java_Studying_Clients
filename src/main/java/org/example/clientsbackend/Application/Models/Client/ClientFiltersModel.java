@@ -15,12 +15,13 @@ public class ClientFiltersModel {
 
     @Min(1)
     @NotNull
-    private Integer page = 1;
+    private Integer page;
 
     @Min(1)
     @NotNull
-    private Integer size = 1;
+    private Integer size;
 
+    @Valid
     private ClientSortModel sortType;
 
     @Valid

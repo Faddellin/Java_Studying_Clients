@@ -11,10 +11,10 @@ import org.mapstruct.factory.Mappers;
 public interface ClientMapper {
     ClientMapper INSTANCE = Mappers.getMapper( ClientMapper.class );
 
-    @Mapping(target = "managerModel", source = "client.manager")
-    @Mapping(target = "addressModel", source = "client.address")
+    @Mapping(target = "managerModel", source = "manager")
+    @Mapping(target = "addressModel", source = "address")
     ClientModel clientToClientModel( Client client );
 
-    @Mapping(target = "address", source = "clientCreateModel.addressCreateModel")
+    @Mapping(target = "address", source = "addressCreateModel")
     Client clientCreateModelToClient( ClientCreateModel clientCreateModel );
 }

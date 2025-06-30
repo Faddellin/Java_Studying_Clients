@@ -5,6 +5,9 @@ import org.springframework.data.domain.Sort;
 
 public class SortFactory {
     public Sort createSort(SortOrder sortOrder, String value){
+        if(sortOrder == null || value == null){
+            return Sort.unsorted();
+        }
         Sort newSort = Sort.by(value);
         newSort = switch (sortOrder) {
             case Ascending -> newSort.ascending();

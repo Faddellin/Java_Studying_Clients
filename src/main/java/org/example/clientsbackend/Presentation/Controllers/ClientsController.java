@@ -5,9 +5,12 @@ import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
 import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
 import org.example.clientsbackend.Application.Models.Client.ClientEditModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
+import org.example.clientsbackend.Application.Models.Client.ClientModel;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
 import org.example.clientsbackend.Application.ServicesInterfaces.ClientService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class ClientsController {
@@ -24,7 +27,7 @@ public class ClientsController {
         _clientService.addClient(clientCreateModel);
     }
     @DeleteMapping(value = "clients/{id}")
-    public void DeleteClient(@PathVariable("id") Long clientId) {
+    public void DeleteClient(@PathVariable("id") Long clientId) throws ExceptionWrapper {
         _clientService.deleteClient(clientId);
     }
     @PostMapping(path = "clients/{id}/update")
@@ -33,9 +36,16 @@ public class ClientsController {
             @PathVariable("id") Long clientId) throws ExceptionWrapper {
         _clientService.updateClient(clientId, clientEditModel);
     }
-
     @PostMapping(path = "clients/get-all")
     public ClientPagedListModel GetClients(@Valid @RequestBody ClientFiltersModel clientFiltersModel) {
         return _clientService.getClients(clientFiltersModel);
+    }
+    @PostMapping(path = "clients/{clientId}/assign-manager/{managerId}")
+    public void AssignManagerToClient(@PathVariable Long clientId, @PathVariable Long managerId) throws ExceptionWrapper {
+        _clientService.assignManagerToCleint(clientId, managerId);
+    }
+    @GetMapping(path = "clients/by-manager/{managerId}")
+    public List<ClientModel> AssignManagerToClient(@PathVariable Long managerId) throws ExceptionWrapper {
+        return _clientService.getClientsByManagerId(managerId);
     }
 }

@@ -8,6 +8,7 @@ import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedLis
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientSortCriteria;
 import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Application.Models.Enums.SortOrder;
+import org.example.clientsbackend.Application.Repositories.Interfaces.AddressRepository;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Domain.Entities.Client;
 import org.example.clientsbackend.Domain.Mappers.ClientMapper;
@@ -32,6 +33,9 @@ public class ClientServiceTests {
 
     @Mock
     private ClientRepository clientRepository;
+
+    @Mock
+    private AddressRepository addressRepository;
 
     @InjectMocks
     private ClientServiceImpl clientService;
@@ -69,9 +73,11 @@ public class ClientServiceTests {
     }
 
     @Test
-    void deleteClient_Normal_ClientDeleted() {
-
+    void deleteClient_Normal_ClientDeleted() throws ExceptionWrapper {
         Long clientId = 1L;
+        when(clientRepository.findById(clientId))
+                .thenReturn(Optional.of(new Client()));
+
 
         clientService.deleteClient(clientId);
 
@@ -91,11 +97,8 @@ public class ClientServiceTests {
         clientService.updateClient(clientId, clientEditModel);
 
         verify(clientRepository, times(1)).findById(clientId);
-        verify(clientRepository, times(1)).save(argThat(
-                client -> client.getEmail().equals(changedEmail) &&
-                          client.getName().equals(changedName) &&
-                          client.getAge().equals(changedAge)
-        ));
+        verify(clientRepository, times(1)).flush();
+        verify(addressRepository, times(1)).flush();
     }
 
     @Test

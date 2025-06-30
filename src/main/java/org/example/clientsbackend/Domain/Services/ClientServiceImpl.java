@@ -9,9 +9,12 @@ import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
 import org.example.clientsbackend.Application.Models.Client.ClientModel;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
 import org.example.clientsbackend.Application.Models.Common.PaginationModel;
+import org.example.clientsbackend.Application.Repositories.Interfaces.AddressRepository;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
+import org.example.clientsbackend.Application.Repositories.Interfaces.ManagerRepository;
 import org.example.clientsbackend.Application.ServicesInterfaces.ClientService;
 import org.example.clientsbackend.Domain.Entities.Client;
+import org.example.clientsbackend.Domain.Entities.Manager;
 import org.example.clientsbackend.Domain.Mappers.AddressMapper;
 import org.example.clientsbackend.Domain.Mappers.ClientMapper;
 import org.springframework.stereotype.Service;
@@ -23,9 +26,13 @@ import java.util.Optional;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository _clientRepository;
+    private final ManagerRepository _managerRepository;
+    private final AddressRepository _addressRepository;
 
-    public ClientServiceImpl(ClientRepository clientRepository) {
+    public ClientServiceImpl(ClientRepository clientRepository, ManagerRepository managerRepository, AddressRepository addressRepository) {
         _clientRepository = clientRepository;
+        _managerRepository = managerRepository;
+        _addressRepository = addressRepository;
     }
 
     public void addClient(ClientCreateModel clientCreateModel) throws ExceptionWrapper {
@@ -42,7 +49,15 @@ public class ClientServiceImpl implements ClientService {
                 .save(ClientMapper.INSTANCE.clientCreateModelToClient(clientCreateModel));
     }
 
-    public void deleteClient(Long clientId){
+    public void deleteClient(Long clientId) throws ExceptionWrapper {
+        Optional<Client> clientO = _clientRepository.findById(clientId);
+
+        if (clientO.isEmpty()) {
+            ExceptionWrapper entityNotFoundException = new ExceptionWrapper(new EntityNotFoundException());
+            entityNotFoundException.addError("Client", "Client is not exists");
+            throw entityNotFoundException;
+        }
+
         _clientRepository
                 .deleteById(clientId);
     }
@@ -70,10 +85,17 @@ public class ClientServiceImpl implements ClientService {
         client.setAge(clientEditModel.getAge());
         client.setName(clientEditModel.getName());
         client.setEmail(clientEditModel.getEmail());
-        if (clientEditModel.getAddressCreateModel() != null)
+        if (clientEditModel.getAddressCreateModel() != null) {
+            if (client.getAddress() != null) {
+                Long oldAddressId = client.getAddress().getId();
+                client.setAddress(null);
+                _clientRepository.flush();
+                _addressRepository.deleteById(oldAddressId);
+            }
             client.setAddress(AddressMapper.INSTANCE.addressCreateModelToAddress(clientEditModel.getAddressCreateModel()));
-
-        _clientRepository.save(client);
+        }
+        _clientRepository.flush();
+        _addressRepository.flush();
     }
 
     public ClientPagedListModel getClients(ClientFiltersModel clientFiltersModel){
@@ -92,5 +114,41 @@ public class ClientServiceImpl implements ClientService {
                 .toList();
 
         return new ClientPagedListModel(clientModels, paginationModel);
+    }
+
+    public void assignManagerToCleint (Long clientId, Long managerId) throws ExceptionWrapper{
+        Optional<Client> clientO = _clientRepository.findById(clientId);
+        Optional<Manager> managerO = _managerRepository.findById(managerId);
+
+        {
+            ExceptionWrapper entityNotFoundException = new ExceptionWrapper(new EntityNotFoundException());
+            if(clientO.isEmpty()){
+                entityNotFoundException.addError("clientId", "Client is not exists");
+            }
+            if(managerO.isEmpty()){
+                entityNotFoundException.addError("managerId", "Manager is not exists");
+            }
+            if(entityNotFoundException.hasErrors()){
+                throw entityNotFoundException;
+            }
+        }
+
+        clientO.get().setManager(managerO.get());
+        _clientRepository.flush();
+    }
+
+    public List<ClientModel> getClientsByManagerId (Long managerId) throws ExceptionWrapper{
+        Optional<Manager> managerO = _managerRepository.findById(managerId);
+
+        if(managerO.isEmpty()){
+            ExceptionWrapper entityNotFoundException = new ExceptionWrapper(new EntityNotFoundException());
+            entityNotFoundException.addError("managerId", "Manager is not exists");
+            throw entityNotFoundException;
+        }
+
+        return _clientRepository.findAllByManager(managerO.get()).stream()
+                .map(ClientMapper.INSTANCE::clientToClientModel)
+                .toList();
+
     }
 }

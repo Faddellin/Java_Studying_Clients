@@ -5,7 +5,7 @@ public enum FilterOperator {
     notEqual,
     greaterThan,
     lessThan,
-    contains,;
+    contains;
 
     public Boolean isApplicableTo(Class<?> obj){
         if(this == FilterOperator.greaterThan || this == FilterOperator.lessThan){

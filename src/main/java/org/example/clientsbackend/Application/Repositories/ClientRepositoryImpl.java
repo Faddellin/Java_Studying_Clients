@@ -11,16 +11,18 @@ import org.example.clientsbackend.Application.Repositories.Factories.SortFactory
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Application.Repositories.Specifications.ClientSpecification;
 import org.example.clientsbackend.Domain.Entities.Client;
+import org.example.clientsbackend.Domain.Entities.Manager;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
+@Primary
 @Repository
-public class ClientRepositoryImpl extends
-        BaseRepositoryImpl<Client, Long>
+public class ClientRepositoryImpl
+        extends BaseRepositoryImpl<Client, Long>
         implements ClientRepository
 {
     private final EntityManager _entityManager;
@@ -44,30 +46,60 @@ public class ClientRepositoryImpl extends
         }catch (NoResultException  ex){
             return Optional.empty();
         }
+    }
 
+    public List<Client> findAllByEmail(String email) {
+
+        CriteriaBuilder cb = _entityManager.getCriteriaBuilder();
+        CriteriaQuery<Client> query = cb.createQuery(Client.class);
+        Root<Client> root = query.from(Client.class);
+
+        query.where(cb.equal(root.get("email"), email));
+
+        return _entityManager.createQuery(query).getResultList();
+    }
+
+    public List<Client> findAllByManager(Manager manager){
+        CriteriaBuilder cb = _entityManager.getCriteriaBuilder();
+        CriteriaQuery<Client> query = cb.createQuery(Client.class);
+        Root<Client> root = query.from(Client.class);
+
+        query.where(cb.equal(root.get("manager"), manager));
+
+        return _entityManager.createQuery(query).getResultList();
     }
 
     public List<Client> getClientsByFilters(ClientFiltersModel clientFiltersModel) {
 
-        Specification<Client> spec = (root, query, criteriaBuilder) -> null;
+        Specification<Client> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
         SortFactory sortFactory = new SortFactory();
-        Sort sort = sortFactory.createSort(clientFiltersModel.getSortType().getSortOrder(),clientFiltersModel.getSortType().getSortCriteria().toString());
+        boolean isSorting = clientFiltersModel.getSortType() != null;
+        Sort sort = sortFactory.createSort(
+                isSorting ?
+                clientFiltersModel.getSortType().getSortOrder() : null,
+                isSorting ?
+                clientFiltersModel.getSortType().getSortCriteria().toString() : null
+        );
 
-        for(ClientFilterModel cfm: clientFiltersModel.getFilterModels()){
-            spec = ClientSpecification.addClientSpec(cfm);
+        if(clientFiltersModel.getFilterModels() != null){
+            for(ClientFilterModel cfm: clientFiltersModel.getFilterModels()){
+                spec = ClientSpecification.addClientSpec(cfm);
+            }
         }
 
         return this.findAll(spec,
-                (clientFiltersModel.getPage() - 1) * clientFiltersModel.getSize(),
+                Math.max((clientFiltersModel.getPage() - 1) * clientFiltersModel.getSize(),0),
                 clientFiltersModel.getSize(),
                 sort);
     }
 
     public Integer getClientsCountByFilters(ClientFiltersModel clientFiltersModel){
-        Specification<Client> spec = (root, query, criteriaBuilder) -> null;
+        Specification<Client> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
 
-        for(ClientFilterModel cfm: clientFiltersModel.getFilterModels()){
-            spec = ClientSpecification.addClientSpec(cfm);
+        if(clientFiltersModel.getFilterModels() != null){
+            for(ClientFilterModel cfm: clientFiltersModel.getFilterModels()){
+                spec = ClientSpecification.addClientSpec(cfm);
+            }
         }
 
         return Math.toIntExact(this.count(spec));
