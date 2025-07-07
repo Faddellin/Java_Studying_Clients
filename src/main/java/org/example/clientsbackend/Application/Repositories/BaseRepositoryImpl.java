@@ -5,11 +5,18 @@ import jakarta.persistence.TypedQuery;
 import org.example.clientsbackend.Application.Repositories.Interfaces.BaseRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
 import java.util.List;
 
 public class BaseRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements BaseRepository<T, ID> {
+
+    public BaseRepositoryImpl(
+            JpaEntityInformation<T, ?> entityInformation,
+            EntityManager entityManager) {
+        super(entityInformation, entityManager);
+    }
 
     public BaseRepositoryImpl(Class<T> domainClass, EntityManager entityManager) {
         super(domainClass, entityManager);

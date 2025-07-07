@@ -1,0 +1,79 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <appender name="jsonBusinessLogicAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/businessLogic/json-businessLogic.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        <TriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/businessLogic/json-businessLogic-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </TriggeringPolicy>
+    </appender>
+
+    <appender name="jsonMethodsAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/methods/json-methods.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        <TriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/methods/json-methods-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </TriggeringPolicy>
+    </appender>
+
+    <appender name="jsonErrorsAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/errors/json-errors.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        <TriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/errors/json-errors-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </TriggeringPolicy>
+    </appender>
+
+    <appender name="jsonRequestsAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/requests/json-requests.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        <TriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/requests/json-requests-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </TriggeringPolicy>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%kvp- %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <logger name="JSON_REQUESTS_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="jsonRequestsAppender"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="JSON_ERRORS_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="jsonErrorsAppender"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="JSON_METHODS_LOGGER" level="DEBUG" additivity="false">
+        <appender-ref ref="jsonMethodsAppender"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="JSON_BUSINESS_LOGIC_LOGGER" level="DEBUG" additivity="false">
+        <appender-ref ref="jsonBusinessLogicAppender"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+</configuration>

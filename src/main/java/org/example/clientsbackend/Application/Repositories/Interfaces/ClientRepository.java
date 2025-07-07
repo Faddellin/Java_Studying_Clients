@@ -11,6 +11,7 @@ public interface ClientRepository extends
         BaseRepository<Client, Long>
 {
     Optional<Client> findByEmail(String email);
+    Optional<Client> findByEmailOrUsername(String email, String username);
     List<Client> findAllByEmail(String email);
     List<Client> findAllByManager(Manager manager);
     List<Client> getClientsByFilters(ClientFiltersModel clientFiltersModel);

@@ -9,11 +9,16 @@ import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedLis
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientSortCriteria;
 import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Application.Models.Enums.SortOrder;
+import org.example.clientsbackend.Application.Models.User.AdminCreateModel;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
+import org.example.clientsbackend.Application.Repositories.Interfaces.UserRepository;
+import org.example.clientsbackend.Application.ServicesInterfaces.AuthService;
 import org.example.clientsbackend.Domain.Entities.Address;
 import org.example.clientsbackend.Domain.Entities.Client;
+import org.example.clientsbackend.Domain.Enums.UserRole;
 import org.example.clientsbackend.Domain.Mappers.ClientMapper;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -43,51 +48,88 @@ public class ClientsControllerTests {
 
     @Autowired
     private ClientRepository _clientRepository;
+    @Autowired
+    private UserRepository _userRepository;
+
+    @Autowired
+    private AuthService _authService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
+    private String accesToken;
+
     private final List<ClientCreateModel> bunchOfTestClients = List.of(
-            new ClientCreateModel(
-                    "aaaName",
-                    "aaaEmail@mail.ru",
-                    10,
-                    new AddressCreateModel("aaaCity", "aaaStreet")),
-            new ClientCreateModel(
-                    "bbbName",
-                    "bbbEmail@mail.ru",
-                    15,
-                    new AddressCreateModel("bbbCity", "bbbStreet")),
-            new ClientCreateModel(
-                    "cccName",
-                    "cccEmail@mail.ru",
-                    20,
-                    new AddressCreateModel("cccCity", "cccStreet"))
+            ClientCreateModel
+                    .builder()
+                    .username("aaaName")
+                    .age(10)
+                    .email("aaaEmail@mail.ru")
+                    .password("secret")
+                    .addressCreateModel(new AddressCreateModel("aaaCity", "aaaStreet"))
+                    .build(),
+            ClientCreateModel
+                    .builder()
+                    .username("bbbName")
+                    .age(10)
+                    .email("bbbEmail@mail.ru")
+                    .password("secret")
+                    .addressCreateModel(new AddressCreateModel("bbbCity", "bbbStreet"))
+                    .build(),
+            ClientCreateModel
+                    .builder()
+                    .username("cccName")
+                    .age(20)
+                    .email("cccEmail@mail.ru")
+                    .password("secret")
+                    .addressCreateModel(new AddressCreateModel("cccCity", "cccStreet"))
+                    .build()
     );
 
     @AfterEach
     public void afterEach(){
+        _userRepository.deleteAll();
         _clientRepository.deleteAll();
         _clientRepository.flush();
+        _userRepository.flush();
+    }
+
+    @BeforeEach
+    public void authorizeRequest() throws ExceptionWrapper {
+        AdminCreateModel userCreateModel = AdminCreateModel
+                .builder()
+                .username("admin")
+                .email("admin@mail.ru")
+                .password("admin")
+                .build();
+        accesToken = _authService.register(userCreateModel).getAccessToken();
     }
 
     void addBunchOfTestClients(){
         bunchOfTestClients.forEach(c ->
-            _clientRepository.save(ClientMapper.INSTANCE.clientCreateModelToClient(c))
+            _clientRepository.save(ClientMapper.INSTANCE.clientCreateModelToClient(
+                    c,
+                    _authService.getPasswordHash(c.getUsername())
+            ))
         );
         _clientRepository.flush();
     }
 
     @Test
-    void addClient_Positive_addClient() throws Exception {
+    void registerClient_Positive_clientRegistered() throws Exception {
         AddressCreateModel addressCreateModel = new AddressCreateModel("testCity","testStreet");
-        ClientCreateModel clientCreateModel = new ClientCreateModel(
-                "testName",
-                "testEmail@mail.ru",
-                20,
-                addressCreateModel);
 
-        mockMvc.perform(post("/clients/add")
+        ClientCreateModel clientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName")
+                .age(20)
+                .password("secret")
+                .email("testEmail@mail.ru")
+                .userRole(UserRole.CLIENT)
+                .addressCreateModel(addressCreateModel)
+                .build();
+
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientCreateModel)
                 )
@@ -97,7 +139,7 @@ public class ClientsControllerTests {
         assertTrue(clientO.isPresent());
         Client client = clientO.get();
         assertEquals(client.getAge(), clientCreateModel.getAge());
-        assertEquals(client.getName(), clientCreateModel.getName());
+        assertEquals(client.getUsername(), clientCreateModel.getUsername());
         assertTrue(() -> {
             Address address = client.getAddress();
             return address.getCity().equals(addressCreateModel.getCity()) &&
@@ -115,7 +157,7 @@ public class ClientsControllerTests {
             "testCity,testStreet,testName,NOT_EMAIL,15,400",
             "testCity,testStreet,testName,testEmail@mail.ru,null,400",
     },nullValues = "null")
-    void addClient_Negative_return400BadRequest(
+    void registerClient_Negative_return400BadRequest(
             String city,
             String street,
             String name,
@@ -124,13 +166,16 @@ public class ClientsControllerTests {
             Integer expectedStatusCode
     ) throws Exception {
         AddressCreateModel addressCreateModel = new AddressCreateModel(city,street);
-        ClientCreateModel clientCreateModel = new ClientCreateModel(
-                name,
-                email,
-                age,
-                addressCreateModel);
+        ClientCreateModel clientCreateModel = ClientCreateModel
+                .builder()
+                .username(name)
+                .age(age)
+                .email(email)
+                .password("secret")
+                .addressCreateModel(addressCreateModel)
+                .build();
 
-        mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientCreateModel)
                 )
@@ -142,26 +187,28 @@ public class ClientsControllerTests {
     }
 
     @Test
-    void addClient_NegativeAddClientWithOccupiedEmail_return400BadRequest() throws Exception {
-        ClientCreateModel clientCreateModel = new ClientCreateModel(
-                "testName",
-                "testEmail@mail.ru",
-                20,
-                new AddressCreateModel("testCity","testStreet"));
+    void registerClient_NegativeAddClientWithOccupiedEmail_return400BadRequest() throws Exception {
+        ClientCreateModel clientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName")
+                .age(20)
+                .email("testEmail@mail.ru")
+                .password("secret")
+                .userRole(UserRole.CLIENT)
+                .addressCreateModel(new AddressCreateModel("testCity","testStreet"))
+                .build();
 
-        mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientCreateModel)
                 )
         ).andExpect(status().is(200));
-        String responseBody = mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientCreateModel)
                 )
-        ).andExpect(status().is(400)).andReturn().getResponse().getContentAsString();
-        ExceptionWrapper ex = objectMapper.readValue(responseBody, ExceptionWrapper.class);
+        ).andExpect(status().is(400));
 
-        assertEquals("Client with such email address already exist", ex.getErrors().get("email"));
         List<Client> clients = _clientRepository.findAllByEmail(clientCreateModel.getEmail());
         assertEquals(1, clients.size());
     }
@@ -170,11 +217,15 @@ public class ClientsControllerTests {
     @Test
     void updateClient_Positive_updateClient() throws Exception {
         AddressCreateModel addressCreateModel = new AddressCreateModel("testCity","testStreet");
-        ClientCreateModel clientCreateModel = new ClientCreateModel(
-                "testName",
-                "testEmail@mail.ru",
-                20,
-                addressCreateModel);
+        ClientCreateModel clientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName")
+                .age(20)
+                .email("testEmail@mail.ru")
+                .password("secret")
+                .userRole(UserRole.CLIENT)
+                .addressCreateModel(addressCreateModel)
+                .build();
 
         AddressCreateModel addressEditedModel = new AddressCreateModel("editedCity","editedStreet");
         ClientEditModel clientEditModel = new ClientEditModel(
@@ -183,13 +234,14 @@ public class ClientsControllerTests {
                 20,
                 addressEditedModel);
 
-        mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientCreateModel)
                 )
         ).andExpect(status().is(200));
         Long clientId = _clientRepository.findByEmail(clientCreateModel.getEmail()).get().getId();
         mockMvc.perform(post("/clients/" + clientId + "/update")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientEditModel)
                 )
@@ -199,7 +251,7 @@ public class ClientsControllerTests {
         assertTrue(clientO.isPresent());
         Client client = clientO.get();
         assertEquals(client.getAge(), clientEditModel.getAge());
-        assertEquals(client.getName(), clientEditModel.getName());
+        assertEquals(client.getUsername(), clientEditModel.getUsername());
         assertTrue(() -> {
             Address address = client.getAddress();
             return address.getCity().equals(addressEditedModel.getCity()) &&
@@ -232,6 +284,7 @@ public class ClientsControllerTests {
                 addressEditedModel);
 
         mockMvc.perform(post("/clients/" + 1 + "/update")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientEditModel)
                 )
@@ -251,6 +304,7 @@ public class ClientsControllerTests {
                 addressEditedModel);
 
         mockMvc.perform(post("/clients/" + 1 + "/update")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientEditModel)
                 )
@@ -259,34 +313,43 @@ public class ClientsControllerTests {
 
     @Test
     void updateClient_NegativeUpdateClientWithOccupiedEmail_return400BadRequest() throws Exception {
-        ClientCreateModel firstClientCreateModel = new ClientCreateModel(
-                "testName",
-                "testEmail@mail.ru",
-                20,
-                new AddressCreateModel("testCity","testStreet"));
-        ClientCreateModel secondClientCreateModel = new ClientCreateModel(
-                "testName",
-                "testEmail1@mail.ru",
-                20,
-                new AddressCreateModel("testCity","testStreet"));
+        ClientCreateModel firstClientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName")
+                .age(20)
+                .email("testEmail@mail.ru")
+                .password("secret")
+                .userRole(UserRole.CLIENT)
+                .addressCreateModel(new AddressCreateModel("testCity","testStreet"))
+                .build();
+        ClientCreateModel secondClientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName1")
+                .age(20)
+                .email("testEmail1@mail.ru")
+                .password("secret")
+                .userRole(UserRole.CLIENT)
+                .addressCreateModel(new AddressCreateModel("testCity","testStreet"))
+                .build();
         ClientEditModel secondClientEditModel = new ClientEditModel(
                 "editedName",
                 "testEmail@mail.ru",
                 20,
                 new AddressCreateModel("editedCity","editedStreet"));
 
-        mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(firstClientCreateModel)
                 )
         ).andExpect(status().is(200));
-        mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(secondClientCreateModel)
                 )
         ).andExpect(status().is(200));
         Long clientId = _clientRepository.findByEmail(secondClientCreateModel.getEmail()).get().getId();
         mockMvc.perform(post("/clients/" + clientId + "/update")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(secondClientEditModel)
                 )
@@ -298,20 +361,25 @@ public class ClientsControllerTests {
 
     @Test
     void deleteClient_Positive_deleteClient() throws Exception {
-        ClientCreateModel clientCreateModel = new ClientCreateModel(
-                "testName",
-                "testEmail@mail.ru",
-                20,
-                new AddressCreateModel("testCity","testStreet"));
+        ClientCreateModel clientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName")
+                .age(20)
+                .email("testEmail@mail.ru")
+                .password("secret")
+                .userRole(UserRole.CLIENT)
+                .addressCreateModel(new AddressCreateModel("testCity","testStreet"))
+                .build();
 
-        mockMvc.perform(post("/clients/add")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientCreateModel)
                 )
         ).andExpect(status().is(200));
         Long clientId = _clientRepository.findByEmail(clientCreateModel.getEmail()).get().getId();
-        mockMvc.perform(delete("/clients/" + clientId)).
-                andExpect(status().is(200));
+        mockMvc.perform(delete("/clients/" + clientId)
+                .header("Authorization", "Bearer " + accesToken))
+                .andExpect(status().is(200));
 
         Optional<Client> clientO = _clientRepository.findByEmail(clientCreateModel.getEmail());
 
@@ -320,8 +388,9 @@ public class ClientsControllerTests {
 
     @Test
     void deleteClient_NegativeClientNotExists_return404NotFound() throws Exception {
-        mockMvc.perform(delete("/clients/" + 1)).
-                andExpect(status().is(404));
+        mockMvc.perform(delete("/clients/" + 1)
+                .header("Authorization", "Bearer " + accesToken))
+                .andExpect(status().is(404));
     }
 
     @Test
@@ -336,6 +405,7 @@ public class ClientsControllerTests {
         );
 
         String responseBody = mockMvc.perform(post("/clients/get-all")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientFiltersModel)
                 )
@@ -362,10 +432,11 @@ public class ClientsControllerTests {
                 1,
                 3,
                 null,
-                List.of(new ClientFilterModel(ClientFilterCriteria.name, FilterOperator.contains, "aaa"))
+                List.of(new ClientFilterModel(ClientFilterCriteria.username, FilterOperator.contains, "aaa"))
         );
 
         String responseBody = mockMvc.perform(post("/clients/get-all")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientFiltersModel)
                 )
@@ -388,10 +459,11 @@ public class ClientsControllerTests {
                 1,
                 3,
                 null,
-                List.of(new ClientFilterModel(ClientFilterCriteria.name, FilterOperator.equal, "aaa"))
+                List.of(new ClientFilterModel(ClientFilterCriteria.username, FilterOperator.equal, "aaa"))
         );
 
         String responseBody = mockMvc.perform(post("/clients/get-all")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientFiltersModel)
                 )
@@ -413,6 +485,7 @@ public class ClientsControllerTests {
         );
 
         String responseBody = mockMvc.perform(post("/clients/get-all")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientFiltersModel)
                 )
@@ -435,14 +508,14 @@ public class ClientsControllerTests {
 
     @ParameterizedTest()
     @CsvSource(value = {
-            "-1,3,name,Ascending,name,contains,aaaName",
-            "null,3,name,Ascending,name,contains,aaaName",
-            "1,0,name,Ascending,name,contains,aaaName",
-            "1,null,name,Ascending,name,contains,aaaName",
-            "1,3,null,Ascending,name,contains,aaaName",
-            "1,3,name,null,name,contains,aaaName",
-            "1,3,name,Ascending,null,contains,aaaName",
-            "1,3,name,Ascending,name,null,aaaName",
+            "-1,3,username,Ascending,username,contains,aaaName",
+            "null,3,username,Ascending,username,contains,aaaName",
+            "1,0,username,Ascending,username,contains,aaaName",
+            "1,null,username,Ascending,username,contains,aaaName",
+            "1,3,null,Ascending,username,contains,aaaName",
+            "1,3,username,null,username,contains,aaaName",
+            "1,3,username,Ascending,null,contains,aaaName",
+            "1,3,username,Ascending,username,null,aaaName",
     },nullValues = "null")
     void getAllCLients_NegativeWithBadClientFilterModel_return400BadRequest(
             Integer page,
@@ -462,6 +535,7 @@ public class ClientsControllerTests {
         );
 
         mockMvc.perform(post("/clients/get-all")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientFiltersModel)
                 )
@@ -479,6 +553,7 @@ public class ClientsControllerTests {
         );
 
         mockMvc.perform(post("/clients/get-all")
+                .header("Authorization", "Bearer " + accesToken)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(clientFiltersModel)
                 )

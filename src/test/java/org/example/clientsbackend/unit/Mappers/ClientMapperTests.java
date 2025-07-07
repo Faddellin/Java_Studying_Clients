@@ -15,8 +15,19 @@ public class ClientMapperTests {
 
     @Test
     void ClientToDto_Normal_returnClientModel(){
-        Client sourceClient = new Client(1L, "testName", "testEmail@mail.ru", 15);
-        Manager sourceManager = new Manager(2L, "managerName", 5425234);
+        Client sourceClient = Client.builder()
+                .username("testName")
+                .id(1L)
+                .email("testEmail@mail.ru")
+                .age(15)
+                .phoneNumber(141235)
+                .build();
+        Manager sourceManager = Manager.builder()
+                .username("managerName")
+                .id(2L)
+                .email("testManagerEmail@mail.ru")
+                .phoneNumber(5425234)
+                .build();
         Address sourceAddress = new Address(3L, "testCity", "randomStreet");
         sourceClient.setManager(sourceManager);
         sourceClient.setAddress(sourceAddress);
@@ -25,13 +36,15 @@ public class ClientMapperTests {
 
         assertNotNull(clientModel);
         assertEquals(clientModel.getId(), sourceClient.getId());
-        assertEquals(clientModel.getName(), sourceClient.getName());
+        assertEquals(clientModel.getPhoneNumber(), sourceClient.getPhoneNumber());
+        assertEquals(clientModel.getUsername(), sourceClient.getUsername());
         assertEquals(clientModel.getEmail(), sourceClient.getEmail());
         assertEquals(clientModel.getAge(), sourceClient.getAge());
         assertTrue(
                 clientModel.getManagerModel().getId().equals(sourceManager.getId()) &&
-                        clientModel.getManagerModel().getFullName().equals(sourceManager.getFullName()) &&
-                        clientModel.getManagerModel().getPhoneNumber().equals(sourceManager.getPhoneNumber())
+                        clientModel.getManagerModel().getUsername().equals(sourceManager.getUsername()) &&
+                        clientModel.getManagerModel().getPhoneNumber().equals(sourceManager.getPhoneNumber()) &&
+                        clientModel.getManagerModel().getEmail().equals(sourceManager.getEmail())
         );
         assertTrue(
                 clientModel.getAddressModel().getId().equals(sourceAddress.getId()) &&
@@ -42,23 +55,21 @@ public class ClientMapperTests {
 
     @Test
     void ClientCreateModelToDomain_Normal_returnClient(){
-        String email = "test@test.com";
-        String name = "testName";
-        Integer age = 15;
-        String city = "testCity";
-        String street = "testStreet";
-        ClientCreateModel clientCreateModel = new ClientCreateModel(name,
-                email,
-                age,
-                new AddressCreateModel(city, street));
+        ClientCreateModel clientCreateModel = ClientCreateModel
+                .builder()
+                .username("testName")
+                .age(15)
+                .email("test@test.com")
+                .addressCreateModel(new AddressCreateModel("testCity", "testStreet"))
+                .build();
 
-        Client result = ClientMapper.INSTANCE.clientCreateModelToClient(clientCreateModel);
+        Client result = ClientMapper.INSTANCE.clientCreateModelToClient(clientCreateModel, "randomHash");
 
         assertNotNull(result);
-        assertEquals(result.getEmail(), email);
-        assertEquals(result.getName(), name);
-        assertEquals(result.getAge(), age);
-        assertEquals(result.getAddress().getCity(), city);
-        assertEquals(result.getAddress().getStreet(), street);
+        assertEquals(result.getEmail(), clientCreateModel.getEmail());
+        assertEquals(result.getUsername(), clientCreateModel.getUsername());
+        assertEquals(result.getAge(), clientCreateModel.getAge());
+        assertEquals(result.getAddress().getCity(), clientCreateModel.getAddressCreateModel().getCity());
+        assertEquals(result.getAddress().getStreet(), clientCreateModel.getAddressCreateModel().getStreet());
     }
 }

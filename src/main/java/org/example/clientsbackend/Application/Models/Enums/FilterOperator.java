@@ -1,5 +1,8 @@
 package org.example.clientsbackend.Application.Models.Enums;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "A filter operator for understanding the type of sorting", example = "equal")
 public enum FilterOperator {
     equal,
     notEqual,

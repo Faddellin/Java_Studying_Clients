@@ -1,5 +1,6 @@
 package org.example.clientsbackend.Application.Models.Client;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import org.example.clientsbackend.Application.Validators.ClientFilter.ClientFilt
 @ClientFilterConstraint
 @AllArgsConstructor
 @Getter @Setter
+@Schema(description = "Stores values for sorting and filtering the user")
 public class ClientFilterModel {
 
     @NotNull
@@ -20,6 +22,7 @@ public class ClientFilterModel {
     private FilterOperator filterOperator;
 
     @NotNull
+    @Schema(description = "Value by which the sorting will take place", example = "exampleEmail@mail.ru")
     private Object value;
 
 }

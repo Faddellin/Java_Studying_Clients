@@ -1,8 +1,12 @@
 package org.example.clientsbackend.Presentation.Controllers;
 
-import jakarta.validation.Valid;
-import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
-import org.example.clientsbackend.Application.Models.Manager.ManagerCreateModel;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.example.clientsbackend.Application.Models.Common.ResponseModel;
 import org.example.clientsbackend.Application.Models.Manager.ManagerModel;
 import org.example.clientsbackend.Application.ServicesInterfaces.ManagerService;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +22,30 @@ public class ManagersController {
         _managerService = managerService;
     }
 
-    @PostMapping(path = "managers/add")
-    public void AddManager(@Valid @RequestBody ManagerCreateModel managerCreateModel) throws ExceptionWrapper {
-        _managerService.addManager(managerCreateModel);
-    }
-
+    @Operation(
+            summary = "Get managers (For ADMIN only)",
+            description = "Retrieve you all managers in system"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Clients retrieved",
+                    content = {@Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = List.class)
+                    )}
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Example of error model for status codes 400-500",
+                    content = {@Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseModel.class)
+                    )}
+            )
+    })
     @GetMapping(path = "managers")
+    @SecurityRequirement(name = "JWT")
     public List<ManagerModel> GetManagers() {
         return _managerService.getManagers();
     }

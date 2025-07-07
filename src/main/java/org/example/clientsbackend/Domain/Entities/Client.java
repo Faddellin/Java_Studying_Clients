@@ -3,29 +3,18 @@ package org.example.clientsbackend.Domain.Entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "clients")
 @AllArgsConstructor @NoArgsConstructor
 @Getter @Setter
-@Builder
-public class Client {
+@SuperBuilder
+@DiscriminatorValue("CLIENT")
+public class Client
+        extends User {
 
-    //Constructor for tests
-    public Client(Long id, String name, String email, Integer age){
-        this.id = id; this.name = name; this.email = email; this.age = age;
-    }
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotNull
-    private String name;
-
-    @NotNull
-    @Column(unique = true)
-    private String email;
+    private Integer phoneNumber;
 
     @NotNull
     private Integer age;

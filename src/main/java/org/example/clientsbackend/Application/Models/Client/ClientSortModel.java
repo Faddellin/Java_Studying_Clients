@@ -1,5 +1,6 @@
 package org.example.clientsbackend.Application.Models.Client;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import org.example.clientsbackend.Application.Models.Client.Enums.ClientSortCrit
 
 @AllArgsConstructor
 @Getter @Setter
+@Schema(description = "Indicates with what criteria and by what type of sorting to sort clients")
 public class ClientSortModel {
 
     @NotNull

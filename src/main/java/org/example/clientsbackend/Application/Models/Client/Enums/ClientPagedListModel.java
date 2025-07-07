@@ -1,6 +1,7 @@
 package org.example.clientsbackend.Application.Models.Client.Enums;
 
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @AllArgsConstructor
 @Getter @Setter
+@Schema(description = "Client list model with pagination")
 public class ClientPagedListModel {
 
     @NotNull

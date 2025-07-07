@@ -69,12 +69,12 @@ public class ReportServiceImpl implements ReportService {
             boolean clientHasManager = client.getManager() != null;
             clientsTable.add(List.of(
                     client.getId().toString(),
-                    client.getName(),
+                    client.getUsername(),
                     client.getEmail(),
                     client.getAge().toString(),
                     clientHasAddress ? client.getAddress().getCity() : "",
                     clientHasAddress ? client.getAddress().getStreet() : "",
-                    clientHasManager ? client.getManager().getFullName() : "")
+                    clientHasManager ? client.getManager().getUsername() : "")
             );
         }
 

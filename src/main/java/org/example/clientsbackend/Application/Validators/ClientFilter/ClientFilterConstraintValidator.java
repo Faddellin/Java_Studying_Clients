@@ -11,11 +11,25 @@ public class ClientFilterConstraintValidator implements ConstraintValidator<Clie
     @Override
     public boolean isValid(ClientFilterModel clientFilterModel, ConstraintValidatorContext constraintValidatorContext) {
         try {
-            Field field = Client.class.getDeclaredField(clientFilterModel.getFilterCriteria().toString());
+            Field field = getFieldIncludingSuperclasses(Client.class ,clientFilterModel.getFilterCriteria().toString());
+
             return clientFilterModel.getFilterOperator().isApplicableTo(field.getType()) &&
                     field.getType().isAssignableFrom(clientFilterModel.getValue().getClass());
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static Field getFieldIncludingSuperclasses(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
+        try {
+            return clazz.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            Class<?> superclass = clazz.getSuperclass();
+            if (superclass != null) {
+                return getFieldIncludingSuperclasses(superclass, fieldName);
+            }
+            throw e;
         }
     }
 }

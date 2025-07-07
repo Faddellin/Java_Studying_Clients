@@ -11,16 +11,18 @@ public class ManagerMapperTests {
 
     @Test
     void ManagerToDto_Normal_returnManagerModel(){
-        Long id = 1L;
-        String fullName = "testName";
-        Integer phoneNumber = 891614556;
-        Manager manager = new Manager(id, fullName, phoneNumber);
-
+        Manager manager = Manager.builder()
+                .username("testName")
+                .id(1L)
+                .email("testManagerEmail@mail.ru")
+                .phoneNumber(5425234)
+                .build();
         ManagerModel managerModel = ManagerMapper.INSTANCE.managerToManagerModel(manager);
 
         assertNotNull(managerModel);
-        assertEquals(managerModel.getId(), id);
-        assertEquals(managerModel.getFullName(), fullName);
-        assertEquals(managerModel.getPhoneNumber(), phoneNumber);
+        assertEquals(managerModel.getId(), manager.getId());
+        assertEquals(managerModel.getUsername(), manager.getUsername());
+        assertEquals(managerModel.getPhoneNumber(), manager.getPhoneNumber());
+        assertEquals(managerModel.getEmail(), manager.getEmail());
     }
 }

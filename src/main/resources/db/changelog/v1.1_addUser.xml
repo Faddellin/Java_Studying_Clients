@@ -1,0 +1,46 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1751445963580-1" author="Faddellin">
+        <createTable tableName="users">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_users"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_role" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="1751445963580-2" author="Faddellin">
+        <addUniqueConstraint columnNames="email" constraintName="uc_users_email" tableName="users"/>
+    </changeSet>
+    <changeSet id="1751445963580-3" author="Faddellin">
+        <addUniqueConstraint columnNames="username" constraintName="uc_users_username" tableName="users"/>
+    </changeSet>
+    <changeSet id="1751445963580-4" author="Faddellin">
+        <addForeignKeyConstraint baseColumnNames="id" baseTableName="clients" constraintName="FK_CLIENTS_ON_ID"
+                                 referencedColumnNames="id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet id="1751445963580-5" author="Faddellin">
+        <addForeignKeyConstraint baseColumnNames="id" baseTableName="managers" constraintName="FK_MANAGERS_ON_ID"
+                                 referencedColumnNames="id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet id="1751445963580-6" author="Faddellin">
+        <dropColumn columnName="email" tableName="clients"/>
+
+        <dropColumn columnName="name" tableName="clients"/>
+    </changeSet>
+    <changeSet id="1751445963580-7" author="Faddellin">
+        <dropColumn columnName="full_name" tableName="managers"/>
+    </changeSet>
+</databaseChangeLog>

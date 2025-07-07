@@ -10,11 +10,9 @@ public class ManagerRepositoryImpl extends
         BaseRepositoryImpl<Manager, Long>
         implements ManagerRepository
 {
-    private final EntityManager _entityManager;
 
     public ManagerRepositoryImpl(EntityManager entityManager) {
         super(Manager.class, entityManager);
-        _entityManager = entityManager;
     }
 
 

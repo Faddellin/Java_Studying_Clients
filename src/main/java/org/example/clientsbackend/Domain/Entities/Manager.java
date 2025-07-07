@@ -6,18 +6,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "managers")
 @AllArgsConstructor @NoArgsConstructor
 @Getter @Setter
-public class Manager {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotNull
-    private String fullName;
+@SuperBuilder
+@DiscriminatorValue("MANAGER")
+public class Manager
+        extends User {
 
     @NotNull
     private Integer phoneNumber;

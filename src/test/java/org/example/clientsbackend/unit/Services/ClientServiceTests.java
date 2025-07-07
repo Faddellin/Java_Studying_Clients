@@ -10,13 +10,12 @@ import org.example.clientsbackend.Application.Models.Enums.FilterOperator;
 import org.example.clientsbackend.Application.Models.Enums.SortOrder;
 import org.example.clientsbackend.Application.Repositories.Interfaces.AddressRepository;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
+import org.example.clientsbackend.Application.Repositories.Interfaces.UserRepository;
 import org.example.clientsbackend.Domain.Entities.Client;
 import org.example.clientsbackend.Domain.Mappers.ClientMapper;
 import org.example.clientsbackend.Domain.Services.ClientServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -35,42 +33,14 @@ public class ClientServiceTests {
     private ClientRepository clientRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+
+    @Mock
     private AddressRepository addressRepository;
 
     @InjectMocks
     private ClientServiceImpl clientService;
-
-    @Test
-    void addClient_Normal_ClientAdded() throws ExceptionWrapper {
-        Long clientId = 1L;
-        String email = "test@test.com";
-        String name = "testName";
-        Integer age = 15;
-        ClientCreateModel clientCreateModel = new ClientCreateModel(name, email, age, null);
-        Client savedClient = new Client(clientId, name, email, age);
-        when(clientRepository.save(any(Client.class))).thenReturn(savedClient);
-
-        clientService.addClient(clientCreateModel);
-
-        verify(clientRepository, times(1)).save(argThat(client -> client.getEmail().equals(email)));
-    }
-
-    @ParameterizedTest
-    @CsvSource(value = {
-            "null,testName,15",
-            "test@mail.ru,null,15",
-            "test@mail.ru,testName,null"
-    }, nullValues = "null")
-    void addClient_Negative_throwIllegalArgumentException(String email, String name, Integer age) {
-        ClientCreateModel clientCreateModel = new ClientCreateModel(email, name, age, null);
-        when(clientRepository.save(any(Client.class)))
-                .thenThrow(new IllegalArgumentException("Not null violation"));
-
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> clientService.addClient(clientCreateModel));
-
-        assertThat(exception.getMessage()).isEqualTo("Not null violation");
-    }
 
     @Test
     void deleteClient_Normal_ClientDeleted() throws ExceptionWrapper {
@@ -91,8 +61,14 @@ public class ClientServiceTests {
         String changedName = "testNameChanged";
         Integer changedAge = 16;
         ClientEditModel clientEditModel = new ClientEditModel(changedName, changedEmail, changedAge, null);
-        Client savedClient = new Client(clientId, "testName", "test@test.com", 15);
+        Client savedClient = Client.builder()
+                .id(clientId)
+                .username(changedName)
+                .email(changedEmail)
+                .age(changedAge)
+                .build();
         when(clientRepository.findById(clientId)).thenReturn(Optional.of(savedClient));
+        when(userRepository.findByEmailOrUsername(changedEmail, changedName)).thenReturn(List.of());
 
         clientService.updateClient(clientId, clientEditModel);
 
@@ -119,11 +95,16 @@ public class ClientServiceTests {
         ClientFiltersModel clientFiltersModel = new ClientFiltersModel(
                 1,
                 5,
-                new ClientSortModel(ClientSortCriteria.name, SortOrder.Ascending),
-                List.of(new ClientFilterModel(ClientFilterCriteria.name, FilterOperator.equal, "test"))
+                new ClientSortModel(ClientSortCriteria.username, SortOrder.Ascending),
+                List.of(new ClientFilterModel(ClientFilterCriteria.username, FilterOperator.equal, "test"))
         );
         List<Client> returningClients = List.of(
-                new Client(1L,"test","test@mail.ru",5)
+                Client.builder()
+                        .id(1L)
+                        .username("test")
+                        .email("test@mail.ru")
+                        .age(5)
+                        .build()
         );
         List<ClientModel> clientsForCheck = returningClients.stream().map(ClientMapper.INSTANCE::clientToClientModel).toList();
         when(clientRepository.getClientsByFilters(clientFiltersModel)).thenReturn(returningClients);

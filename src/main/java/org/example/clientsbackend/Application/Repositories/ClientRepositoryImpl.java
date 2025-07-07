@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import org.example.clientsbackend.Application.Models.Client.ClientFilterModel;
 import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
+import org.example.clientsbackend.Application.Models.Client.Enums.ClientFilterCriteria;
 import org.example.clientsbackend.Application.Repositories.Factories.SortFactory;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Application.Repositories.Specifications.ClientSpecification;
@@ -39,6 +40,22 @@ public class ClientRepositoryImpl
         Root<Client> root = query.from(Client.class);
 
         query.where(cb.equal(root.get("email"), email));
+
+        try{
+            Client client = _entityManager.createQuery(query).getSingleResult();
+            return Optional.ofNullable(client);
+        }catch (NoResultException  ex){
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Client> findByEmailOrUsername(String email, String username){
+        CriteriaBuilder cb = _entityManager.getCriteriaBuilder();
+        CriteriaQuery<Client> query = cb.createQuery(Client.class);
+        Root<Client> root = query.from(Client.class);
+
+        query.where(cb.equal(root.get(ClientFilterCriteria.email.toString()), email));
+        query.where(cb.equal(root.get(ClientFilterCriteria.username.toString()), username));
 
         try{
             Client client = _entityManager.createQuery(query).getSingleResult();

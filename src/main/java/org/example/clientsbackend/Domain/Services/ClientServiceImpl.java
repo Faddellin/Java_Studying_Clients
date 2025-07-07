@@ -3,20 +3,21 @@ package org.example.clientsbackend.Domain.Services;
 import jakarta.persistence.EntityNotFoundException;
 import org.apache.coyote.BadRequestException;
 import org.example.clientsbackend.Application.Exceptions.ExceptionWrapper;
-import org.example.clientsbackend.Application.Models.Client.ClientCreateModel;
-import org.example.clientsbackend.Application.Models.Client.ClientEditModel;
-import org.example.clientsbackend.Application.Models.Client.ClientFiltersModel;
-import org.example.clientsbackend.Application.Models.Client.ClientModel;
+import org.example.clientsbackend.Application.Models.Client.*;
 import org.example.clientsbackend.Application.Models.Client.Enums.ClientPagedListModel;
 import org.example.clientsbackend.Application.Models.Common.PaginationModel;
 import org.example.clientsbackend.Application.Repositories.Interfaces.AddressRepository;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ClientRepository;
 import org.example.clientsbackend.Application.Repositories.Interfaces.ManagerRepository;
+import org.example.clientsbackend.Application.Repositories.Interfaces.UserRepository;
 import org.example.clientsbackend.Application.ServicesInterfaces.ClientService;
 import org.example.clientsbackend.Domain.Entities.Client;
 import org.example.clientsbackend.Domain.Entities.Manager;
+import org.example.clientsbackend.Domain.Entities.User;
 import org.example.clientsbackend.Domain.Mappers.AddressMapper;
 import org.example.clientsbackend.Domain.Mappers.ClientMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,27 +27,25 @@ import java.util.Optional;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository _clientRepository;
+    private final UserRepository _userRepository;
     private final ManagerRepository _managerRepository;
     private final AddressRepository _addressRepository;
+    private final Logger logger = LoggerFactory.getLogger("JSON_BUSINESS_LOGIC_LOGGER");
 
-    public ClientServiceImpl(ClientRepository clientRepository, ManagerRepository managerRepository, AddressRepository addressRepository) {
+    public ClientServiceImpl(
+            ClientRepository clientRepository,
+            ManagerRepository managerRepository,
+            AddressRepository addressRepository,
+            UserRepository userRepository) {
         _clientRepository = clientRepository;
         _managerRepository = managerRepository;
         _addressRepository = addressRepository;
+        _userRepository = userRepository;
     }
 
-    public void addClient(ClientCreateModel clientCreateModel) throws ExceptionWrapper {
-
-        Optional<Client> clientO = _clientRepository.findByEmail(clientCreateModel.getEmail());
-
-        if (clientO.isPresent()) {
-            ExceptionWrapper badRequestExceptionWrapper = new ExceptionWrapper(new BadRequestException());
-            badRequestExceptionWrapper.addError("email", "Client with such email address already exist");
-            throw badRequestExceptionWrapper;
-        }
-
+    public void saveClient(Client client){
         _clientRepository
-                .save(ClientMapper.INSTANCE.clientCreateModelToClient(clientCreateModel));
+                .save(client);
     }
 
     public void deleteClient(Long clientId) throws ExceptionWrapper {
@@ -72,18 +71,22 @@ public class ClientServiceImpl implements ClientService {
             throw enittyNotFoundExceptionWrapper;
         }
 
-        Optional<Client> clientWithSuchEmailO = _clientRepository.findByEmail(clientEditModel.getEmail());
+        List<User> usersWithSuchEmailOrUsername = _userRepository.findByEmailOrUsername(
+                clientEditModel.getEmail(),
+                clientEditModel.getUsername()
+        );
 
-        if (clientWithSuchEmailO.isPresent() && !clientWithSuchEmailO.get().getId().equals(clientId)) {
+        if (usersWithSuchEmailOrUsername.size() > 1 ||
+                (!usersWithSuchEmailOrUsername.isEmpty() && !usersWithSuchEmailOrUsername.get(0).getId().equals(clientId))) {
             ExceptionWrapper badRequestExceptionWrapper = new ExceptionWrapper(new BadRequestException());
-            badRequestExceptionWrapper.addError("email", "Client with such email address already exist");
+            badRequestExceptionWrapper.addError("clientEditModel", "Client with such email or username already exist");
             throw badRequestExceptionWrapper;
         }
 
         Client client = clientO.get();
 
         client.setAge(clientEditModel.getAge());
-        client.setName(clientEditModel.getName());
+        client.setUsername(clientEditModel.getUsername());
         client.setEmail(clientEditModel.getEmail());
         if (clientEditModel.getAddressCreateModel() != null) {
             if (client.getAddress() != null) {
@@ -96,6 +99,22 @@ public class ClientServiceImpl implements ClientService {
         }
         _clientRepository.flush();
         _addressRepository.flush();
+    }
+
+    public void updateClientPhoneNumber(ClientPhoneUpdateModel сlientPhoneUpdateModel) throws ExceptionWrapper{
+        Optional<Client> clientO = _clientRepository
+                .findById(сlientPhoneUpdateModel.getClientId());
+
+        if (clientO.isEmpty()) {
+            ExceptionWrapper enittyNotFoundExceptionWrapper = new ExceptionWrapper(new EntityNotFoundException());
+            enittyNotFoundExceptionWrapper.addError("clientId", "Client not found");
+            throw enittyNotFoundExceptionWrapper;
+        }
+
+        Client client = clientO.get();
+
+        client.setPhoneNumber(сlientPhoneUpdateModel.getPhoneNumber());
+        _clientRepository.save(client);
     }
 
     public ClientPagedListModel getClients(ClientFiltersModel clientFiltersModel){
@@ -124,9 +143,11 @@ public class ClientServiceImpl implements ClientService {
             ExceptionWrapper entityNotFoundException = new ExceptionWrapper(new EntityNotFoundException());
             if(clientO.isEmpty()){
                 entityNotFoundException.addError("clientId", "Client is not exists");
+                logger.error("Cannot assign manager to client with id: ({}), client is not exists", clientId);
             }
             if(managerO.isEmpty()){
                 entityNotFoundException.addError("managerId", "Manager is not exists");
+                logger.error("Cannot assign manager with id: ({}) to client, manager is not exists", managerId);
             }
             if(entityNotFoundException.hasErrors()){
                 throw entityNotFoundException;
@@ -135,6 +156,8 @@ public class ClientServiceImpl implements ClientService {
 
         clientO.get().setManager(managerO.get());
         _clientRepository.flush();
+
+        logger.info("Manager with id: ({}) was assigned to client with id: ({})", managerId, clientId);
     }
 
     public List<ClientModel> getClientsByManagerId (Long managerId) throws ExceptionWrapper{

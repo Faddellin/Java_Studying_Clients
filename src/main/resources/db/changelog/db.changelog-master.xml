@@ -4,5 +4,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <include file="v1.0_init.xml" relativeToChangelogFile="true"/>
+    <include file="v1.1_addUser.xml" relativeToChangelogFile="true"/>
+    <include file="db/changelog/v1.2_addUserPhoneNumber.xml"/>
 
 </databaseChangeLog>

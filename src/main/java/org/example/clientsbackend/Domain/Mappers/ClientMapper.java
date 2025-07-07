@@ -15,6 +15,8 @@ public interface ClientMapper {
     @Mapping(target = "addressModel", source = "address")
     ClientModel clientToClientModel( Client client );
 
-    @Mapping(target = "address", source = "addressCreateModel")
-    Client clientCreateModelToClient( ClientCreateModel clientCreateModel );
+    @Mapping(target = "address", source = "clientCreateModel.addressCreateModel")
+    @Mapping(target = "username", source = "clientCreateModel.username")
+    @Mapping(target = "passwordHash", source = "passwordHash")
+    Client clientCreateModelToClient(ClientCreateModel clientCreateModel, String passwordHash);
 }
