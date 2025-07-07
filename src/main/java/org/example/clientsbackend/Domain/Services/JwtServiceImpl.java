@@ -7,6 +7,8 @@ import io.jsonwebtoken.security.SignatureException;
 import org.example.clientsbackend.Application.ServicesInterfaces.JwtService;
 import org.example.clientsbackend.Domain.Entities.User;
 import org.example.clientsbackend.Domain.Enums.UserRole;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,8 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${jwt.access-token.lifetime-minutes}")
     private Long jwtLifetimeInMinutes;
+
+    private final Logger logger = LoggerFactory.getLogger("JSON_ERRORS_LOGGER");
 
     public String generateToken(User user){
         Map<String, Object> claims = new HashMap<>();
@@ -58,18 +62,10 @@ public class JwtServiceImpl implements JwtService {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (ExpiredJwtException e) {
-            //log.error("Token expired", e);
-        } catch (UnsupportedJwtException e) {
-            //log.error("Unsupported jwt", e);
-        } catch (MalformedJwtException e) {
-            //log.error("Malformed jwt", e);
-        } catch (SignatureException e) {
-            //log.error("Invalid signature", e);
-        } catch (Exception e) {
-            //log.error("invalid token", e);
+        }catch (Exception e) {
+            logger.error("Token validation error", e);
+            return false;
         }
-        return false;
     }
 
     private String generateToken(Map<String, Object> extraClaims, String userSubject) {

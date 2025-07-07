@@ -11,7 +11,6 @@ import org.example.clientsbackend.Domain.Entities.Client;
 import java.util.List;
 
 public interface ClientService {
-    //void addClient(ClientCreateModel clientCreateModel) throws ExceptionWrapper;
     void saveClient(Client client);
     void deleteClient(Long clientId) throws ExceptionWrapper;
     void updateClient(Long clientId, ClientEditModel clientEditModel) throws ExceptionWrapper;

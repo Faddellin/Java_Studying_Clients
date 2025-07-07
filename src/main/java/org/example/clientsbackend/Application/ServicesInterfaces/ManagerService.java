@@ -6,7 +6,6 @@ import org.example.clientsbackend.Domain.Entities.Manager;
 import java.util.List;
 
 public interface ManagerService {
-    //void addManager(ManagerCreateModel managerCreateModel) throws ExceptionWrapper;
     void saveManager(Manager manager);
     List<ManagerModel> getManagers();
 }
